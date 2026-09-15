@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="/">&larr; All categories</a>
+<h1>{{ category.name }}</h1>
+<p class="muted">{{ category.description }}</p>
+
+<div id="interview">
+  {% if category.current_question %}
+  <div class="question-box">
+    <p class="question">{{ category.current_question }}</p>
+    <form hx-post="/category/{{ category.slug }}/answer"
+          hx-target="#captured-entries"
+          hx-swap="afterbegin"
+          hx-on::after-request="this.reset()">
+      <textarea name="answer" rows="5" placeholder="Type your answer... as much detail as you want." required></textarea>
+      <button type="submit">Save & Continue</button>
+    </form>
+  </div>
+  {% else %}
+  <p class="muted">No more questions queued right now — refresh later for more adaptive follow-ups.</p>
+  {% endif %}
+</div>
+
+<h2>Captured so far ({{ entries|length }})</h2>
+<div id="captured-entries">
+  {% for entry in entries %}
+    {% include "entry_partial.html" %}
+  {% endfor %}
+</div>
+{% endblock %}

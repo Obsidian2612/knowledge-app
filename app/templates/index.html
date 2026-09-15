@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Your Knowledge Areas</h1>
+<div class="grid">
+  {% for c in categories %}
+  <a class="card" href="/category/{{ c.slug }}">
+    <h2>{{ c.name }}</h2>
+    <p>{{ c.description }}</p>
+    <span class="count">{{ counts.get(c.id, 0) }} entries captured</span>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

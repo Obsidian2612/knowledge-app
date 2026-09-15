@@ -1,0 +1,30 @@
+<div class="entry-card">
+  <div class="entry-head">
+    <strong>{{ entry.title }}</strong>
+    <a class="delete-link" href="/entry/{{ entry.id }}/delete" onclick="return confirm('Delete this entry?')">delete</a>
+  </div>
+  <p class="entry-question">Q: {{ entry.question_text }}</p>
+  <p>{{ entry.structured_summary }}</p>
+  <div class="tags">
+    {% for t in entry.tags %}<span class="tag">{{ t }}</span>{% endfor %}
+  </div>
+</div>
+
+{% if next_question is defined %}
+<div id="interview" hx-swap-oob="true">
+  {% if next_question %}
+  <div class="question-box">
+    <p class="question">{{ next_question }}</p>
+    <form hx-post="/category/{{ category.slug }}/answer"
+          hx-target="#captured-entries"
+          hx-swap="afterbegin"
+          hx-on::after-request="this.reset()">
+      <textarea name="answer" rows="5" placeholder="Type your answer... as much detail as you want." required></textarea>
+      <button type="submit">Save & Continue</button>
+    </form>
+  </div>
+  {% else %}
+  <p class="muted">No more questions queued right now — refresh later for more adaptive follow-ups.</p>
+  {% endif %}
+</div>
+{% endif %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="/">&larr; All categories</a>
+<h1>Search results for "{{ q }}"</h1>
+{% if not results %}
+<p class="muted">No matches yet — or nothing captured that's similar.</p>
+{% endif %}
+<div id="captured-entries">
+  {% for entry in results %}
+  <div class="entry-card">
+    <div class="entry-head">
+      <strong>{{ entry.title }}</strong>
+      <span class="muted">{{ entry.category.name }}</span>
+    </div>
+    <p class="entry-question">Q: {{ entry.question_text }}</p>
+    <p>{{ entry.structured_summary }}</p>
+    <div class="tags">
+      {% for t in entry.tags %}<span class="tag">{{ t }}</span>{% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
