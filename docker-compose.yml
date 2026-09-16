@@ -20,14 +20,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    env_file:
-      - .env
     environment:
       DATABASE_URL: postgresql+psycopg2://knowledge:knowledge@db:5432/knowledge
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-4-6}
     ports:
-      - "8000:8000"
+      - "8009:8000"
     volumes:
-      - ./app:/app/app
+      - uploads:/app/data/uploads
 
 volumes:
   pgdata:
+  uploads:
