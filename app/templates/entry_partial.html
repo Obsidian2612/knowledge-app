@@ -5,6 +5,15 @@
   </div>
   <p class="entry-question">Q: {{ entry.question_text }}</p>
   <p>{{ entry.structured_summary }}</p>
+  {% if entry.images %}
+  <div class="entry-images">
+    {% for img in entry.images %}
+    <a href="/uploads/{{ img.filename }}" target="_blank">
+      <img src="/uploads/{{ img.filename }}" alt="attached photo">
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
   <div class="tags">
     {% for t in entry.tags %}<span class="tag">{{ t }}</span>{% endfor %}
   </div>
@@ -18,8 +27,12 @@
     <form hx-post="/category/{{ category.slug }}/answer"
           hx-target="#captured-entries"
           hx-swap="afterbegin"
+          hx-encoding="multipart/form-data"
           hx-on::after-request="this.reset()">
       <textarea name="answer" rows="5" placeholder="Type your answer... as much detail as you want." required></textarea>
+      <label class="file-label">Attach photos (optional)
+        <input type="file" name="images" accept="image/*" multiple>
+      </label>
       <button type="submit">Save & Continue</button>
     </form>
   </div>

@@ -1,20 +1,33 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, Request, Depends, Form
+import os
+import base64
+import uuid
+
+from fastapi import FastAPI, Request, Depends, Form, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 
 from app.database import get_db, engine, Base
-from app.models import Category, StarterQuestion, KnowledgeEntry
+from app.models import Category, StarterQuestion, KnowledgeEntry, EntryImage
 from app import ai
+
+UPLOAD_DIR = "data/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app = FastAPI(title="Knowledge Catalogue")
 templates = Jinja2Templates(directory="app/templates")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+# pgvector ships in the image but isn't enabled in a fresh database by default
+with engine.connect() as conn:
+    conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+    conn.commit()
 
 Base.metadata.create_all(bind=engine)
 
@@ -93,12 +106,32 @@ def submit_answer(
     slug: str,
     request: Request,
     answer: str = Form(...),
+    images: list[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
 ):
     category = db.query(Category).filter_by(slug=slug).first()
     question = category.current_question
 
-    structured = ai.structure_answer(category.name, question, answer)
+    # Save uploaded images to disk and prep base64 copies for Claude's vision input
+    saved_filenames = []
+    image_payloads = []
+    for img in images:
+        if not img.filename:
+            continue
+        raw = img.file.read()
+        if not raw:
+            continue
+        ext = os.path.splitext(img.filename)[1] or ".jpg"
+        stored_name = f"{uuid.uuid4().hex}{ext}"
+        with open(os.path.join(UPLOAD_DIR, stored_name), "wb") as f:
+            f.write(raw)
+        saved_filenames.append(stored_name)
+        image_payloads.append({
+            "media_type": img.content_type or "image/jpeg",
+            "data": base64.b64encode(raw).decode("utf-8"),
+        })
+
+    structured = ai.structure_answer(category.name, question, answer, images=image_payloads)
     try:
         embedding = ai.embed_text(f"{structured['title']}. {structured['summary']}")
     except Exception:
@@ -114,6 +147,10 @@ def submit_answer(
         embedding=embedding,
     )
     db.add(entry)
+    db.flush()  # get entry.id before attaching images
+
+    for fname in saved_filenames:
+        db.add(EntryImage(entry_id=entry.id, filename=fname))
 
     next_q = _next_question(db, category)
     category.current_question = next_q or ""

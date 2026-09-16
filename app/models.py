@@ -51,3 +51,15 @@ class KnowledgeEntry(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     category = relationship("Category", back_populates="entries")
+    images = relationship("EntryImage", back_populates="entry", cascade="all, delete-orphan")
+
+
+class EntryImage(Base):
+    __tablename__ = "entry_images"
+
+    id = Column(Integer, primary_key=True)
+    entry_id = Column(Integer, ForeignKey("knowledge_entries.id"), nullable=False)
+    filename = Column(String, nullable=False)  # stored under /app/data/uploads
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    entry = relationship("KnowledgeEntry", back_populates="images")

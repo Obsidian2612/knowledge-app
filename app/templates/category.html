@@ -11,8 +11,12 @@
     <form hx-post="/category/{{ category.slug }}/answer"
           hx-target="#captured-entries"
           hx-swap="afterbegin"
+          hx-encoding="multipart/form-data"
           hx-on::after-request="this.reset()">
       <textarea name="answer" rows="5" placeholder="Type your answer... as much detail as you want." required></textarea>
+      <label class="file-label">Attach photos (optional)
+        <input type="file" name="images" accept="image/*" multiple>
+      </label>
       <button type="submit">Save & Continue</button>
     </form>
   </div>

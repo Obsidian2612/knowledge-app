@@ -38,27 +38,37 @@ def _extract_json(text: str) -> dict:
     return json.loads(text)
 
 
-def structure_answer(category_name: str, question: str, answer: str) -> dict:
-    """Turn a raw spoken/typed answer into a structured knowledge entry."""
+def structure_answer(category_name: str, question: str, answer: str, images: list[dict] | None = None) -> dict:
+    """
+    Turn a raw spoken/typed answer into a structured knowledge entry.
+    `images`, if given, is a list of {"media_type": "image/jpeg", "data": <base64 str>}.
+    When present, Claude looks at the photos and folds what it sees into the summary.
+    """
     system = (
         "You help catalogue a domain expert's personal knowledge base. "
-        f"The category is '{category_name}'. Given a question and the expert's "
-        "raw answer, produce a JSON object with keys: "
+        f"The category is '{category_name}'. Given a question, the expert's "
+        "raw answer, and any attached photos, produce a JSON object with keys: "
         "'title' (short, under 8 words), "
-        "'summary' (a clear, well-written rewrite of the knowledge in 2-5 sentences, "
+        "'summary' (a clear, well-written rewrite of the knowledge in 2-6 sentences, "
         "preserving every technical detail, number, and specific fact given — do not "
-        "invent details that weren't stated), and "
+        "invent details that weren't stated. If photos are attached, describe what's "
+        "relevant in them and weave that into the summary), and "
         "'tags' (3-6 short lowercase keyword tags). "
         "Respond with ONLY the JSON object, no other text."
     )
+
+    content = [{"type": "text", "text": f"Question: {question}\n\nAnswer: {answer}"}]
+    for img in images or []:
+        content.append({
+            "type": "image",
+            "source": {"type": "base64", "media_type": img["media_type"], "data": img["data"]},
+        })
+
     msg = client().messages.create(
         model=CLAUDE_MODEL,
-        max_tokens=600,
+        max_tokens=700,
         system=system,
-        messages=[{
-            "role": "user",
-            "content": f"Question: {question}\n\nAnswer: {answer}",
-        }],
+        messages=[{"role": "user", "content": content}],
     )
     text = "".join(b.text for b in msg.content if b.type == "text")
     try:
