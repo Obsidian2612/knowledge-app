@@ -59,3 +59,16 @@ textarea {
   font-size: .75rem; padding: .15rem .5rem; border-radius: 20px; margin-right: .3rem;
 }
 .muted { color: var(--muted); }
+.page-head { display: flex; justify-content: space-between; align-items: center; }
+.add-btn {
+  background: var(--accent); color: white; text-decoration: none;
+  padding: .5rem 1rem; border-radius: 6px; font-size: .9rem; white-space: nowrap;
+}
+.new-category-form { display: flex; flex-direction: column; gap: 1rem; max-width: 500px; }
+.new-category-form label { display: flex; flex-direction: column; gap: .3rem; font-weight: 600; font-size: .9rem; }
+.new-category-form input, .new-category-form textarea {
+  font-weight: 400; padding: .6rem; border: 1px solid var(--border); border-radius: 6px; font-family: inherit;
+}
+.file-label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: .6rem; }
+.entry-images { display: flex; gap: .5rem; flex-wrap: wrap; margin: .6rem 0; }
+.entry-images img { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }

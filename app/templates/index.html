@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Your Knowledge Areas</h1>
+<div class="page-head">
+  <h1>Your Knowledge Areas</h1>
+  <a class="add-btn" href="/categories/new">+ Add knowledge area</a>
+</div>
 <div class="grid">
   {% for c in categories %}
   <a class="card" href="/category/{{ c.slug }}">

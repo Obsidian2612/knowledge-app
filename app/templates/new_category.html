@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="/">&larr; All categories</a>
+<h1>Add a knowledge area</h1>
+
+<form method="post" action="/categories" class="new-category-form">
+  <label>Name
+    <input type="text" name="name" placeholder="e.g. Welding" required>
+  </label>
+
+  <label>Short description
+    <input type="text" name="description" placeholder="What does this cover?">
+  </label>
+
+  <label>Starter questions (optional)
+    <textarea name="custom_questions" rows="5"
+      placeholder="One question per line. Leave blank and Claude will write 4 for you based on the name and description above."></textarea>
+  </label>
+
+  <button type="submit">Create knowledge area</button>
+</form>
+{% endblock %}

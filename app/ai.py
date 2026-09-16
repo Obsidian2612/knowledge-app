@@ -81,7 +81,38 @@ def structure_answer(category_name: str, question: str, answer: str, images: lis
     return data
 
 
-def generate_followup(category_name: str, recent_entries: list[dict]) -> str | None:
+def generate_starter_questions(name: str, description: str) -> list[str]:
+    """Generate 4 solid opening interview questions for a brand-new category."""
+    system = (
+        "You help set up a personal knowledge-capture interview. Given a subject "
+        "area name and short description, write exactly 4 opening questions that "
+        "would draw out a practitioner's real hands-on knowledge — favor things "
+        "like common mistakes, diagnostic approaches, rules of thumb, and judgment "
+        "calls over generic textbook questions. "
+        "Respond with ONLY a JSON array of 4 strings, no other text."
+    )
+    msg = client().messages.create(
+        model=CLAUDE_MODEL,
+        max_tokens=400,
+        system=system,
+        messages=[{
+            "role": "user",
+            "content": f"Subject area: {name}\nDescription: {description or '(none given)'}",
+        }],
+    )
+    text = "".join(b.text for b in msg.content if b.type == "text")
+    try:
+        data = _extract_json(text)
+        if isinstance(data, list) and all(isinstance(q, str) for q in data):
+            return data[:6]
+    except (json.JSONDecodeError, ValueError):
+        pass
+    return [
+        f"What's the most common mistake you see in {name}?",
+        f"What's a rule of thumb you use in {name} that isn't written down anywhere?",
+        f"Walk me through how you approach a typical {name} problem.",
+        f"What's something about {name} that took you years to learn?",
+    ]
     """
     Ask Claude for the next best question to deepen coverage of this category,
     based on what's already been captured. Returns None if Claude thinks the

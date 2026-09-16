@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
+import re
 import base64
 import uuid
 
@@ -38,6 +39,11 @@ def seed_on_startup():
     run()
 
 
+def _slugify(name: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+    return slug or uuid.uuid4().hex[:8]
+
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request, db: Session = Depends(get_db)):
     categories = db.query(Category).order_by(Category.name).all()
@@ -50,6 +56,40 @@ def home(request: Request, db: Session = Depends(get_db)):
         "index.html",
         {"request": request, "categories": categories, "counts": counts},
     )
+
+
+@app.get("/categories/new", response_class=HTMLResponse)
+def new_category_form(request: Request):
+    return templates.TemplateResponse("new_category.html", {"request": request})
+
+
+@app.post("/categories", response_class=HTMLResponse)
+def create_category(
+    request: Request,
+    name: str = Form(...),
+    description: str = Form(""),
+    custom_questions: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    slug = _slugify(name)
+    base_slug = slug
+    n = 1
+    while db.query(Category).filter_by(slug=slug).first():
+        n += 1
+        slug = f"{base_slug}-{n}"
+
+    lines = [q.strip() for q in custom_questions.splitlines() if q.strip()]
+    questions = lines if lines else ai.generate_starter_questions(name, description)
+
+    category = Category(slug=slug, name=name, description=description)
+    db.add(category)
+    db.flush()
+    for i, q in enumerate(questions):
+        db.add(StarterQuestion(category_id=category.id, order=i, text=q))
+    category.current_question = questions[0] if questions else ""
+    db.commit()
+
+    return RedirectResponse(f"/category/{slug}", status_code=303)
 
 
 @app.get("/category/{slug}", response_class=HTMLResponse)
