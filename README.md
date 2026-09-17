@@ -1,42 +1,58 @@
 # Knowledge Catalogue
 
 A self-hosted app that interviews you, category by category, and turns your
-answers into a structured, searchable personal knowledge base — using Claude
-to ask smart follow-up questions and clean up your raw answers into clear
-summaries + tags.
+answers into a structured, searchable personal knowledge base — using a
+local Ollama model to ask smart follow-up questions and clean up your raw
+answers into clear summaries + tags.
 
 ## How it works
 
 - Each category (Farming, Auto Mechanics, Electrical, SQL Server, etc.) has
   4 fixed starter questions (edit these in `app/seed_data.py`).
-- Once you've answered all the starters for a category, Claude starts
+- Once you've answered all the starters for a category, the model starts
   generating adaptive follow-up questions based on what you've already told
   it — trying to fill in gaps rather than ask generic questions.
-- Every answer you give is sent to Claude, which rewrites it into a clean
-  title + summary + tags, and is stored in Postgres.
+- Every answer you give is sent to your Ollama server, which rewrites it
+  into a clean title + summary + tags, stored in Postgres.
 - A local embedding model (`sentence-transformers`, runs inside the
-  container, no extra API key) embeds each entry so search finds
-  conceptually similar answers, not just keyword matches.
+  container) embeds each entry so search finds conceptually similar
+  answers, not just keyword matches.
+
 
 ## Setup
 
-1. Copy the env file and add your Anthropic API key:
+1. Find the Docker network your Ollama container is on:
 
    ```bash
-   cp .env.example .env
-   # edit .env and set ANTHROPIC_API_KEY
+   docker inspect ollama --format '{% raw %}{{json .NetworkSettings.Networks}}{% endraw %}'
    ```
 
-2. Build and run:
+   Take that network name and put it in `docker-compose.yml`, replacing
+   `CHANGE_ME_TO_YOUR_OLLAMA_NETWORK`. (If Ollama's container is actually
+   named something other than `ollama`, also update `OLLAMA_HOST` in the
+   same file.)
+
+2. In Portainer, set the stack environment variable `OLLAMA_MODEL` to a
+   model you've already pulled on that Ollama server, e.g.:
 
    ```bash
-   docker compose up --build
+   docker exec -it ollama ollama pull llama3.2:1b
    ```
 
-   First build will take a while — it downloads the embedding model
-   dependencies (torch etc). Subsequent builds are cached.
+   Small/CPU-friendly options: `llama3.2:1b`, `qwen2.5:1.5b`, `llama3.2:3b`
+   — bigger generally means better-structured summaries and follow-up
+   questions, at the cost of slower responses on CPU.
 
-3. Open http://localhost:8000
+3. Deploy the stack. The app talks to Ollama over `http://ollama:11434`
+   using its OpenAI/chat-style API — no API key needed.
+
+4. Open `http://<host>:8009`.
+
+Note: no vision model is wired up, so photos you attach are stored and
+shown in the entry, but not analyzed by the AI. If you later pull a vision
+model (`llava`, `qwen2.5vl`, `llama3.2-vision`), the `structure_answer`
+function in `app/ai.py` is the place to re-add image content to the
+Ollama request.
 
 ## Customizing categories
 

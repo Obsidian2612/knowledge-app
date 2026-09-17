@@ -22,13 +22,22 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg2://knowledge:knowledge@db:5432/knowledge
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-4-6}
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
     ports:
       - "8009:8000"
     volumes:
       - uploads:/app/data/uploads
+    networks:
+      - default
+      - ollama-net
 
 volumes:
   pgdata:
   uploads:
+
+networks:
+  default:
+  ollama-net:
+    external: true
+    name: CHANGE_ME_TO_YOUR_OLLAMA_NETWORK
