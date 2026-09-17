@@ -40,4 +40,4 @@ networks:
   default:
   ollama-net:
     external: true
-    name: CHANGE_ME_TO_YOUR_OLLAMA_NETWORK
+    name: ollama-net
