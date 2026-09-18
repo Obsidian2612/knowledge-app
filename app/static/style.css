@@ -72,3 +72,22 @@ textarea {
 .file-label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: .6rem; }
 .entry-images { display: flex; gap: .5rem; flex-wrap: wrap; margin: .6rem 0; }
 .entry-images img { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+.section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .2rem; }
+.case-list { display: flex; flex-direction: column; gap: .5rem; margin: .8rem 0 1.5rem; }
+.case-item {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: .7rem 1rem; text-decoration: none; color: var(--ink);
+}
+.status-badge {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .03em;
+  padding: .15rem .5rem; border-radius: 20px; font-weight: 600;
+}
+.status-open { background: #fdf0d8; color: #9a6a12; }
+.status-resolved { background: #e2efe4; color: var(--accent); }
+.case-writeup {
+  background: #f0f4ef; border: 1px solid var(--border); border-radius: 10px;
+  padding: 1.2rem; margin-bottom: 1.5rem;
+}
+.case-writeup h1 { margin: 0 0 .5rem; font-size: 1.3rem; }
+.finish-btn { background: #2f4f6f; margin-top: .6rem; }

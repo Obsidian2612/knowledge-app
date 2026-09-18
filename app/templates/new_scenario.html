@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="/category/{{ category.slug }}">&larr; {{ category.name }}</a>
+<h1>Log a case</h1>
+<p class="muted">
+  Describe a specific situation you handled — what came in, what you tried,
+  what worked. The AI will ask follow-up questions to dig into the details
+  that make this case worth remembering.
+</p>
+
+<form method="post" action="/category/{{ category.slug }}/cases"
+      enctype="multipart/form-data" class="new-category-form">
+  <label>What happened?
+    <textarea name="description" rows="8" required
+      placeholder="e.g. Had a vehicle come in with an intermittent stall. Spent a few days on it, replaced the fuel pump and ignition coil which didn't help. Eventually swapped the crank position sensor and the fault pattern changed, which pointed to..."></textarea>
+  </label>
+  <label class="file-label">Attach photos (optional)
+    <input type="file" name="images" accept="image/*" multiple>
+  </label>
+  <button type="submit">Start case</button>
+</form>
+{% endblock %}

@@ -4,6 +4,23 @@
 <h1>{{ category.name }}</h1>
 <p class="muted">{{ category.description }}</p>
 
+<div class="section-head">
+  <h2>Cases</h2>
+  <a class="add-btn" href="/category/{{ category.slug }}/cases/new">+ Log a case</a>
+</div>
+<p class="muted">Deep-dive write-ups of specific situations you've handled.</p>
+<div class="case-list">
+  {% for s in scenarios %}
+  <a class="case-item" href="/case/{{ s.id }}">
+    <strong>{{ s.title or "Untitled case (in progress)" }}</strong>
+    <span class="status-badge status-{{ s.status }}">{{ s.status }}</span>
+  </a>
+  {% else %}
+  <p class="muted">No cases logged yet.</p>
+  {% endfor %}
+</div>
+
+<h2>Quick capture</h2>
 <div id="interview">
   {% if category.current_question %}
   <div class="question-box">

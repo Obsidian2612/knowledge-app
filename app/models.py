@@ -63,3 +63,58 @@ class EntryImage(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     entry = relationship("KnowledgeEntry", back_populates="images")
+
+
+class Scenario(Base):
+    """
+    A single real-world case (e.g. one tricky vehicle repair) captured as a
+    running interview: an initial description, then AI-generated follow-ups
+    that dig into that specific incident, ending in a structured write-up.
+    """
+    __tablename__ = "scenarios"
+
+    id = Column(Integer, primary_key=True)
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
+
+    status = Column(String, default="open")  # 'open' or 'resolved' (written up)
+    current_question = Column(Text, default="")
+
+    # Filled in once the case is finished and AI writes it up
+    title = Column(String, default="")
+    summary = Column(Text, default="")       # full narrative: symptom -> dead ends -> fix
+    root_cause = Column(Text, default="")
+    tags = Column(ARRAY(String), default=list)
+    embedding = Column(Vector(EMBED_DIM), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    category = relationship("Category")
+    turns = relationship(
+        "ScenarioTurn", back_populates="scenario",
+        cascade="all, delete-orphan", order_by="ScenarioTurn.order",
+    )
+    images = relationship("ScenarioImage", back_populates="scenario", cascade="all, delete-orphan")
+
+
+class ScenarioTurn(Base):
+    __tablename__ = "scenario_turns"
+
+    id = Column(Integer, primary_key=True)
+    scenario_id = Column(Integer, ForeignKey("scenarios.id"), nullable=False)
+    order = Column(Integer, default=0)
+    question = Column(Text, nullable=False)
+    answer = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    scenario = relationship("Scenario", back_populates="turns")
+
+
+class ScenarioImage(Base):
+    __tablename__ = "scenario_images"
+
+    id = Column(Integer, primary_key=True)
+    scenario_id = Column(Integer, ForeignKey("scenarios.id"), nullable=False)
+    filename = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    scenario = relationship("Scenario", back_populates="images")

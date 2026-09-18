@@ -115,6 +115,79 @@ def generate_starter_questions(name: str, description: str) -> list[str]:
     ]
 
 
+def generate_scenario_followup(category_name: str, turns: list[dict]) -> str | None:
+    """
+    Given the running Q&A for one specific real-world case, ask ONE more
+    targeted follow-up to dig deeper into that case — what was tried, what
+    didn't work, what finally worked, and why. Returns None once the model
+    judges the case has enough detail to write up (the user can also just
+    click "Finish" at any point regardless).
+    """
+    system = (
+        f"You are helping a {category_name} expert document one specific real "
+        "case they handled (e.g. a hard-to-diagnose repair), so it can be "
+        "referenced later. Below is the case so far, as question/answer pairs. "
+        "Ask ONE new, specific follow-up question that digs deeper into this "
+        "particular case — prioritize: what was tried that DIDN'T work and why "
+        "it seemed reasonable at the time, what changed things and led to the "
+        "real cause, exact symptoms/measurements/part names, and the reasoning "
+        "that connected the fix to the root cause. "
+        "If the case already seems fully documented (root cause and fix are "
+        "both clear), respond with exactly: DONE. "
+        "Otherwise respond with ONLY the question text, nothing else."
+    )
+    history = "\n".join(
+        f"- Q: {t['question']}\n  A: {t['answer']}" for t in turns
+    ) or "(nothing yet)"
+
+    try:
+        text = _chat(system, history, max_tokens=200, json_mode=False)
+    except httpx.HTTPError:
+        return None
+
+    text = text.strip().strip('"').strip()
+    if not text or text.upper() == "DONE":
+        return None
+    return text
+
+
+def summarize_scenario(category_name: str, turns: list[dict]) -> dict:
+    """Turn a full scenario Q&A thread into a structured case write-up."""
+    system = (
+        f"You help catalogue a {category_name} expert's real-world case "
+        "histories. Below is a full interview about one specific case, as "
+        "question/answer pairs. Respond with ONLY a JSON object with exactly "
+        "these keys: "
+        '"title" (short, under 10 words, naming the problem), '
+        '"summary" (a clear narrative in 4-10 sentences covering: the initial '
+        "symptom, what was tried that didn't work and why it seemed reasonable, "
+        "what finally worked, keeping every specific detail, part name, and "
+        'number mentioned — do not invent anything not stated), '
+        '"root_cause" (1-2 sentences: what was actually wrong, in plain terms), '
+        '"tags" (3-6 short lowercase keyword tags as a JSON array of strings). '
+        "No other text, no markdown fences, just the JSON object."
+    )
+    history = "\n".join(
+        f"- Q: {t['question']}\n  A: {t['answer']}" for t in turns
+    ) or "(nothing captured)"
+
+    try:
+        text = _chat(system, history, max_tokens=900, json_mode=True)
+        data = _extract_json(text)
+    except (httpx.HTTPError, json.JSONDecodeError, ValueError):
+        data = {}
+
+    if not isinstance(data, dict):
+        data = {}
+    data.setdefault("title", "Untitled case")
+    data.setdefault("summary", history)
+    data.setdefault("root_cause", "")
+    data.setdefault("tags", [])
+    if not isinstance(data.get("tags"), list):
+        data["tags"] = []
+    return data
+
+
 def generate_followup(category_name: str, recent_entries: list[dict]) -> str | None:
     """
     Ask the model for the next best question to deepen coverage of this

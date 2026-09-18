@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="/category/{{ scenario.category.slug }}">&larr; {{ scenario.category.name }}</a>
+
+{% if scenario.status == "resolved" %}
+<div class="case-writeup">
+  <div class="entry-head">
+    <h1>{{ scenario.title }}</h1>
+    <a class="delete-link" href="/case/{{ scenario.id }}/delete" onclick="return confirm('Delete this case?')">delete</a>
+  </div>
+  <p>{{ scenario.summary }}</p>
+  {% if scenario.root_cause %}
+  <p><strong>Root cause:</strong> {{ scenario.root_cause }}</p>
+  {% endif %}
+  <div class="tags">
+    {% for t in scenario.tags %}<span class="tag">{{ t }}</span>{% endfor %}
+  </div>
+</div>
+{% else %}
+<h1>Case in progress</h1>
+{% endif %}
+
+{% if scenario.images %}
+<div class="entry-images">
+  {% for img in scenario.images %}
+  <a href="/uploads/{{ img.filename }}" target="_blank">
+    <img src="/uploads/{{ img.filename }}" alt="attached photo">
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h2>Interview</h2>
+<div id="timeline">
+  {% for turn in scenario.turns %}
+  <div class="entry-card">
+    <p class="entry-question">Q: {{ turn.question }}</p>
+    <p>{{ turn.answer }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<div id="case-interview">
+  {% if scenario.status == "open" %}
+    {% if scenario.current_question %}
+    <div class="question-box">
+      <p class="question">{{ scenario.current_question }}</p>
+      <form hx-post="/case/{{ scenario.id }}/turn"
+            hx-target="#timeline"
+            hx-swap="beforeend"
+            hx-encoding="multipart/form-data"
+            hx-on::after-request="this.reset()">
+        <textarea name="answer" rows="5" required placeholder="Type your answer..."></textarea>
+        <label class="file-label">Attach photos (optional)
+          <input type="file" name="images" accept="image/*" multiple>
+        </label>
+        <button type="submit">Continue</button>
+      </form>
+    </div>
+    {% else %}
+    <p class="muted">The AI thinks this case is fully documented — finish it up whenever you're ready.</p>
+    {% endif %}
+    <form method="post" action="/case/{{ scenario.id }}/finish">
+      <button type="submit" class="finish-btn">Finish &amp; write up case</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}
